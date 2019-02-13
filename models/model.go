@@ -11,15 +11,6 @@ import (
 )
 
 
-const (
-	host = "39.108.12.40"
-	port = 5432
-	user = "postgres"
-	password = "666666"
-	dbname = "airqualityindexdb"
-)
-
-
 type AirQualityIndex struct {
 	Date time.Time `orm:"pk"`
 	AQI float64
@@ -34,8 +25,10 @@ type AirQualityIndex struct {
 
 
 func init()  {
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		host,port,user,password,dbname)
+	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		beego.AppConfig.String("postgresqlHost"), beego.AppConfig.String("postgresqlPort"),
+		beego.AppConfig.String("postgresqlUser"), beego.AppConfig.String("postgresqlPassword"),
+		beego.AppConfig.String("postgresqlDbname"))
 	err := orm.RegisterDriver("postgres", orm.DRPostgres)
 	CheckErr(err)
 	err = orm.RegisterDataBase("default", "postgres", psqlInfo)

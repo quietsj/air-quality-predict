@@ -8,9 +8,7 @@ import (
 )
 
 
-// env GOPATH="/Users/quietsj/go"
+// env GOPATH=$GOPATH
 func main() {
-	//models.GetAirQualityIndexData()
-
 	beego.Run()
 }
