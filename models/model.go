@@ -5,11 +5,9 @@ import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
 	_ "github.com/lib/pq"
-	"io/ioutil"
 	"strings"
 	"time"
 )
-
 
 type AirQualityIndex struct {
 	Date time.Time `orm:"pk"`
@@ -38,16 +36,12 @@ func init()  {
 	CheckErr(err)
 }
 
-
-func Insert()  {
+func Insert(insertData string)  {
 	o := orm.NewOrm()
 	r := o.Raw("alter table air_quality_index add constraint unique_date unique(date)")
 	_, err := r.Exec()
 	CheckErr(err)
-	data, err := ioutil.ReadFile("./docs/aqi-data.csv")
-	CheckErr(err)
-	dataList := strings.Split(string(data), "\n")
-	dataList = dataList[1:len(dataList)-1]
+	dataList := strings.Split(string(insertData), "\n")
 	values := "(?, ?, ?, ?, ?, ?, ?, ?, ?)"
 	time1 := time.Now()
 	for _, raw := range dataList{
@@ -56,15 +50,38 @@ func Insert()  {
 		_, err = r.Exec()
 		CheckErr(err)
 	}
-	fmt.Printf("%v s insert finish!\n", time.Since(time1).Seconds())
+	beego.Debug(fmt.Sprintf("%v s insert finish!", time.Since(time1).Seconds()))
 }
 
 func Select(aqi *[]AirQualityIndex)  {
 	o := orm.NewOrm()
 	time1 := time.Now()
 	num, _ := o.Raw("select * from air_quality_index order by date asc").QueryRows(aqi)
-	beego.Debug(fmt.Sprintf("%v s %d raws select finish! %d\n", time.Since(time1).Seconds(), num, len(*aqi)))
+	beego.Debug(fmt.Sprintf("%v s %d raws select finish!", time.Since(time1).Seconds(), num))
 }
+
+func StructToString(aqiData []AirQualityIndex) string {
+	stringData := ""
+	for i, v:= range aqiData{
+		r := fmt.Sprintf("%v,%v,%v,%v,%v,%v,%v,%v,%v",
+			v.Date,
+			v.AQI,
+			v.QualityGrade,
+			v.PM2_5,
+			v.PM10,
+			v.SO2,
+			v.CO,
+			v.NO2,
+			v.O3_8h)
+		if i == len(aqiData) - 1{
+			stringData += r
+		}else {
+			stringData += r + "\n"
+		}
+	}
+	return stringData
+}
+
 
 func CheckErr(err error) {
 	if err != nil {

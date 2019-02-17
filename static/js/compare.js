@@ -6,10 +6,10 @@ $(function() {
   'use strict';
 
   var KNearestNeighborsData = {
-    labels: chartLabel,
+    labels: knnLabel,
     datasets: [{
         label: 'Real',
-        data: chartReal,
+        data: knnReal,
         borderColor: ['rgba(255, 0, 0, 1)'],
         backgroundColor: ['rgba(255, 0, 0, 1)'],
         borderWidth: 2,
@@ -17,7 +17,7 @@ $(function() {
       },
       {
         label: 'Predict',
-        data: chartPredict,
+        data: knnPredict,
         borderColor: ['rgba(0, 0, 255, 1)'],
         backgroundColor: ['rgba(0, 0, 255, 1)'],
         borderWidth: 2,
@@ -26,53 +26,28 @@ $(function() {
     ]
   };
 
-  var KNearestNeighborsOptions = {
-    plugins: {
-      filler: {
-        propagate: true
-      }
-    },
-    elements: {
-      point: {
-        radius: 2
-      }
-    },
-    scales: {
-      xAxes: [{
-        gridLines: {
-          display: false
-        }
-      }],
-      yAxes: [{
-        gridLines: {
-          display: false
-        }
-      }]
-    }
-  };
-
   var GradientTreeBoostingData = {
-        labels: chartLabel,
+        labels: gbtLabel,
         datasets: [{
             label: 'Real',
-            data: chartReal,
+            data: gbtReal,
             borderColor: ['rgba(255, 0, 0, 1)'],
             backgroundColor: ['rgba(255, 0, 0, 1)'],
             borderWidth: 2,
             fill: false
         },
-            {
-                label: 'Predict',
-                data: chartPredict,
-                borderColor: ['rgba(0, 0, 255, 1)'],
-                backgroundColor: ['rgba(0, 0, 255, 1)'],
-                borderWidth: 2,
-                fill: false
-            }
+        {
+            label: 'Predict',
+            data: gbtPredict,
+            borderColor: ['rgba(0, 0, 255, 1)'],
+            backgroundColor: ['rgba(0, 0, 255, 1)'],
+            borderWidth: 2,
+            fill: false
+        }
         ]
     };
 
-  var GradientTreeBoostingOptions = {
+    var CompareOptions = {
         plugins: {
             filler: {
                 propagate: true
@@ -86,23 +61,24 @@ $(function() {
         scales: {
             xAxes: [{
                 gridLines: {
-                    display: false
+                    display: true
                 }
             }],
             yAxes: [{
                 gridLines: {
-                    display: false
+                    display: true
                 }
             }]
         }
     };
 
-  if ($("#K-Nearest-Neighbors").length) {
+
+    if ($("#K-Nearest-Neighbors").length) {
     var KNearestNeighborsCanvas = $("#K-Nearest-Neighbors").get(0).getContext("2d");
     var KNearestNeighborsChart = new Chart(KNearestNeighborsCanvas, {
       type: 'line',
       data: KNearestNeighborsData,
-      options: KNearestNeighborsOptions
+      options: CompareOptions
     });
   }
 
@@ -112,7 +88,7 @@ $(function() {
       var GradientTreeBoostingChart = new Chart(GradientTreeBoostingCanvas, {
           type: 'line',
           data: GradientTreeBoostingData,
-          options: GradientTreeBoostingOptions
+          options: CompareOptions
       });
   }
 

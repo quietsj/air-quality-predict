@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 git add -A
-git commit -am"add deploy shell"
+git commit -am"update air quality predict"
 git push -u origin master
