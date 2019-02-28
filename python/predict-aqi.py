@@ -1,94 +1,75 @@
 # coding=utf-8
 import numpy as np
 from sklearn.externals import joblib
-import json
 import threading
 import datetime
 
 
-def l1_loss(y, y_):
-    return np.mean(map(abs, y - y_))
+def normal(x):
+    for j in range(x.shape[1]):
+        sea = x[:, j]
+        x[:, j] = (sea - np.mean(sea)) / np.std(sea)
 
 
-def build_train_data(data, date, m):
-    x = []
-    label = []
-    y_date = []
-    for i in range(len(data)-m):
-        x.append(data[i:i+m])
-        label.append(data[i+m])
-        y_date.append(date[i+m][:10])
-    return np.array(x), np.array(label), ",".join(y_date)
+def build_data(x):
+    test_x, m = [], 7
+    for i in range(len(x)-m):
+        test_x.append(np.reshape(x[i:i+m], (49,)))
+    return np.array(test_x)
 
 
-def predict(path, test_x, y, model):
+def predict(path, model, x, result):
     mo = joblib.load(path + model)
-    y["result"] = np.around(mo.predict(test_x), decimals=1)
-
-
-def get_compare(predict_data, path, model_name):
-    with open(path + "train-model.json", 'r') as f:
-        train_model_json = json.load(f)
-    x = []
-    date = []
-    for r in predict_data.split("\n"):
-        r = r.split(",")
-        date.append(r[0])
-        x.append(r[1:2] + r[3:])
-    x = np.array(x).astype(np.float64)
-    aqi = x[:, 0]
-    aqi_diff = train_model_json["aqi_max"] - train_model_json["aqi_min"]
-    aqi = (aqi - train_model_json["aqi_min"]) / aqi_diff
-
-    aqi_x, aqi_label, y_date = build_train_data(aqi, date, train_model_json["{0}_m".format(model_name)])
-    y = {}
-    t = threading.Thread(target=predict, args=(path, aqi_x, y, "{0}.pkl".format(model_name)))
-    t.start()
-    t.join()
-    aqi_label = aqi_label * aqi_diff + train_model_json["aqi_min"]
-    y = y["result"] * aqi_diff + train_model_json["aqi_min"]
-    return ",".join(y.astype(np.str)) + "\n" + ",".join(aqi_label.astype(np.str)) + "\n" + y_date
-
-
-def nearest_neighbors(predict_data, path):
-    return get_compare(predict_data, path, "knn")
-
-
-def gradient_boosting_tree(predict_data, path):
-    return get_compare(predict_data, path, "gbdt")
+    y_ = mo.predict(x)
+    result.append(y_)
 
 
 def index_data(predict_data, path):
-    with open(path + "train-model.json", 'r') as f:
-        train_model_json = json.load(f)
     x = []
     date = []
     for r in predict_data.split("\n"):
         r = r.split(",")
-        date.append(r[0])
+        date.append(r[0][:10])
         x.append(r[1:2] + r[3:])
     x = np.array(x).astype(np.float64)
-    aqi = x[:, 0]
-    aqi_diff = train_model_json["aqi_max"] - train_model_json["aqi_min"]
-    aqi = list((aqi - train_model_json["aqi_min"]) / aqi_diff)
     predict_days = 7
+    aqi = x[-predict_days:, 0]
+    test_x = build_data(x)
+    normal(test_x)
+
+    test_x = test_x[-1].reshape(1, 49)
+    date = date[-predict_days:]
     for i in range(predict_days):
-        now = datetime.datetime.strptime(date[-1][:10], "%Y-%m-%d")
-        date.append("{0}".format(now + datetime.timedelta(days=1)))
-    gbdt_m = train_model_json["gbdt_m"]
-    for i in range(predict_days):
-        y_ = {}
-        t = threading.Thread(target=predict,
-                             args=(path,
-                                   np.array(aqi[-gbdt_m:]).reshape(1, gbdt_m),
-                                   y_, "gbdt.pkl"))
+        now = datetime.datetime.strptime(date[-1], "%Y-%m-%d")
+        date.append("{0}".format(now + datetime.timedelta(days=1))[:10])
+    # knn
+    knn_result = []
+    t = threading.Thread(target=predict, args=(path, "knn.pkl", test_x, knn_result))
+    t.start()
+    t.join()
+    # gbdt
+    gbdt_result = []
+    for j in range(predict_days):
+        gbdtj_result = []
+        t = threading.Thread(target=predict, args=(path, "gbdt{0}.pkl".format(j),
+                                                          test_x, gbdtj_result))
         t.start()
         t.join()
-        if i > 0:
-            aqi.append(y_["result"][0] + 0.01 * np.random.randint(-5, 6))
-        else:
-            aqi.append(y_["result"][0])
-    aqi = np.array(aqi) * aqi_diff + train_model_json["aqi_min"]
-    date = [day[:10] for day in date]
-    return ",".join(date) + "\n" + ",".join(aqi.astype(np.str))
+        gbdt_result.append(gbdtj_result[0][0])
+    gbdt_result = np.array(gbdt_result)
+    # nn
+    nn_result = []
+    t = threading.Thread(target=predict, args=(path, "nn.pkl", test_x, nn_result))
+    t.start()
+    t.join()
+    res = "{0}\n{1}\n{2}\n{3}\n{4}".format(",".join(date),
+                                           ",".join(aqi.astype(np.str)),
+                                           ",".join(knn_result[0][0].astype(np.str)),
+                                           ",".join(gbdt_result.astype(np.str)),
+                                           ",".join(nn_result[0][0].astype(np.str)))
+    return res
 
+
+# if __name__ == "__main__":
+#     data = open("/Users/quietsj/go/src/air-quality-predict/docs/aqi-data.csv", "r")
+#     index_data(data.read(), "/Users/quietsj/go/src/air-quality-predict/docs/")

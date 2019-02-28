@@ -50,14 +50,21 @@ func Insert(insertData string)  {
 		_, err = r.Exec()
 		CheckErr(err)
 	}
-	beego.Debug(fmt.Sprintf("%v s insert finish!", time.Since(time1).Seconds()))
+	beego.Informational(fmt.Sprintf("%v s insert finish!", time.Since(time1).Seconds()))
 }
 
 func Select(aqi *[]AirQualityIndex)  {
 	o := orm.NewOrm()
 	time1 := time.Now()
 	num, _ := o.Raw("select * from air_quality_index order by date asc").QueryRows(aqi)
-	beego.Debug(fmt.Sprintf("%v s %d raws select finish!", time.Since(time1).Seconds(), num))
+	beego.Informational(fmt.Sprintf("%v s %d raws select finish!", time.Since(time1).Seconds(), num))
+}
+
+func DateSelect(aqi *[]AirQualityIndex, start, end string)  {
+	o := orm.NewOrm()
+	num, _ := o.Raw("select * from air_quality_index " +
+		"where date >= ? and date <= ?  order by date asc", start, end).QueryRows(aqi)
+	beego.Informational(fmt.Sprintf("%d raws select finish!", num))
 }
 
 func StructToString(aqiData []AirQualityIndex) string {

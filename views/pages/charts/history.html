@@ -1,0 +1,31 @@
+<div class="main-panel">
+  <div class="content-wrapper">
+    <div class="row">
+      <form action="#" method="post" class="d-xl-table-row">
+        <div class="form-group">
+          <label class="label">start date</label>
+          <div class="input-group">
+            <input value="{{.Pstart}}" name="start_date" type="text" class="form-control" placeholder={{.Start}}>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="label">end date</label>
+          <div class="input-group">
+            <input value="{{.Pend}}" name="end_date" type="text" class="form-control" placeholder={{.End}}>
+          </div>
+        </div>
+        <div class="form-group">
+          <button class="btn btn-primary submit-btn btn-block">ok</button>
+        </div>
+      </form>
+      <div class="col-lg-12 grid-margin stretch-card">
+        <div class="card">
+          <div class="card-body">
+            <h4 class="card-title">Air Quality Index History Data</h4>
+            <canvas id="Air-Quality-Index-History-Data" style="height:250px"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

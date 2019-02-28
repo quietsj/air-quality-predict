@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func crawlData()  {
+func CrawlData()  {
 	month := fmt.Sprintf("%v", time.Now())[:7]
 	res := go_python.CallPythonInterface(
 		"crawl-data",
@@ -19,8 +19,8 @@ func crawlData()  {
 
 func UpdateDatabase()  {
 	c := cron.New()
-	updateTime := "0 0 0 * * *"
-	err := c.AddFunc(updateTime, crawlData)
+	updateTime := "0/30 * * * * *"
+	err := c.AddFunc(updateTime, CrawlData)
 	models.CheckErr(err)
 	c.Start()
 	select {}

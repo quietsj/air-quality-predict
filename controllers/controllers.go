@@ -3,17 +3,15 @@ package controllers
 import (
 	"air-quality-predict/go-python/machine-learning"
 	"air-quality-predict/models"
-	"encoding/json"
 	"fmt"
 	"github.com/astaxie/beego"
-	"io/ioutil"
 )
 
 type MainController struct {
 	beego.Controller
 }
 
-type CompareController struct {
+type HistoryController struct {
 	beego.Controller
 }
 
@@ -29,18 +27,16 @@ func (c *MainController) Get() {
 	aqiData := make([]models.AirQualityIndex, 0, 0)
 	models.Select(&aqiData)
 	indexData := make(map[string]interface{})
-	trainJson := make(map[string]interface{})
-	data, err := ioutil.ReadFile(beego.AppConfig.String("modelSave")+"train-model.json")
-	models.CheckErr(err)
-	err = json.Unmarshal(data, &trainJson)
-	models.CheckErr(err)
-	gbdtM := trainJson["gbdt_m"].(float64)
-	machine_learning.IndexAqi(models.StructToString(aqiData[len(aqiData)-int(gbdtM):]), indexData)
+	machine_learning.Index(
+		models.StructToString(aqiData[len(aqiData)-machine_learning.TestDays:]),
+		indexData)
 	c.TplName = "pages/charts/index-js.html"
 	c.Data["dateHistory"] = indexData["dateHistory"]
 	c.Data["aqiHistory"] = indexData["aqiHistory"]
 	c.Data["dateFuture"] = indexData["dateFuture"]
-	c.Data["aqiFuture"] = indexData["aqiFuture"]
+	c.Data["knnFuture"] = indexData["knnFuture"]
+	c.Data["gbdtFuture"] = indexData["gbdtFuture"]
+	c.Data["nnFuture"] = indexData["nnFuture"]
 	c.Layout = "layout/layout.html"
 	c.LayoutSections = make(map[string]string)
 	c.LayoutSections["LayoutContent"] = "index.html"
@@ -60,22 +56,44 @@ func (c *LoginController)Post()  {
 	c.Redirect("/", 302)
 }
 
-func (c *CompareController)Get()  {
+type date struct {
+	StartDate string `form:"start_date"`
+	EndDate string `form:"end_date"`
+}
+
+func (c *HistoryController)Post()  {
+	d := date{}
+	err := c.ParseForm(&d)
+	models.CheckErr(err)
+	HistoryData := make(map[string]interface{})
+	machine_learning.History(d.StartDate, d.EndDate, HistoryData)
+	c.TplName = "pages/charts/history-js.html"
+	c.Layout = "layout/layout.html"
+	c.Data["Pstart"] = d.StartDate
+	c.Data["Pend"] = d.EndDate
+	c.Data["Date"] = HistoryData["Date"]
+	c.Data["AQI"] = HistoryData["AQI"]
+	c.LayoutSections = make(map[string]string)
+	c.LayoutSections["LayoutContent"] = "pages/charts/history.html"
+	c.LayoutSections["Scripts"] = "pages/charts/history-js.html"
+}
+
+func (c *HistoryController)Get()  {
 	aqiData := make([]models.AirQualityIndex, 0, 0)
 	models.Select(&aqiData)
-	compareData := make(map[string]interface{})
-	machine_learning.CompareAqi(models.StructToString(aqiData[len(aqiData)-machine_learning.TestDays:]), compareData)
-	c.TplName = "pages/charts/compare-js.html"
-	c.Data["knnReal"] = compareData["knnReal"]
-	c.Data["knnPredict"] = compareData["knnPredict"]
-	c.Data["knnLabel"] = compareData["knnLabel"]
-	c.Data["gbtReal"] = compareData["gbtReal"]
-	c.Data["gbtPredict"] = compareData["gbtPredict"]
-	c.Data["gbtLabel"] = compareData["gbtLabel"]
+	start := fmt.Sprintf("%v", aqiData[len(aqiData)-30].Date)[:10]
+	end := fmt.Sprintf("%v", aqiData[len(aqiData)-1].Date)[:10]
+	HistoryData := make(map[string]interface{})
+	machine_learning.History(start, end, HistoryData)
+	c.TplName = "pages/charts/history-js.html"
 	c.Layout = "layout/layout.html"
+	c.Data["Start"] = start
+	c.Data["End"] = end
+	c.Data["Date"] = HistoryData["Date"]
+	c.Data["AQI"] = HistoryData["AQI"]
 	c.LayoutSections = make(map[string]string)
-	c.LayoutSections["LayoutContent"] = "pages/charts/compare.html"
-	c.LayoutSections["Scripts"] = "pages/charts/compare-js.html"
+	c.LayoutSections["LayoutContent"] = "pages/charts/history.html"
+	c.LayoutSections["Scripts"] = "pages/charts/history-js.html"
 }
 
 func (c *LoginController)Get()  {

@@ -22,10 +22,26 @@ $(function() {
     var AirQualityIndexFuture = {
         labels: dateFuture,
         datasets: [{
-            label: 'Air Quality Index Future data',
-            data: aqiFuture,
+            label: 'knn predict',
+            data: knnFuture,
             borderColor: ['rgba(0, 0, 255, 1)'],
             backgroundColor: ['rgba(0, 0, 255, 1)'],
+            borderWidth: 2,
+            fill: false
+        },
+        {
+            label: 'gbdt predict',
+            data: gbdtFuture,
+            borderColor: ['rgba(0, 255, 0, 1)'],
+            backgroundColor: ['rgba(0, 255, 0, 1)'],
+            borderWidth: 2,
+            fill: false
+        },
+        {
+            label: 'nn predict',
+            data: nnFuture,
+            borderColor: ['rgba(255, 255, 0, 1)'],
+            backgroundColor: ['rgba(255, 255, 0, 1)'],
             borderWidth: 2,
             fill: false
         }
