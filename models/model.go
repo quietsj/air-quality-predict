@@ -21,7 +21,10 @@ type AirQualityIndex struct {
 	O3_8h float64
 }
 
-
+type PredictAir struct {
+	Date time.Time `orm:"pk"`
+	AQI float64
+}
 func init()  {
 	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		beego.AppConfig.String("postgresqlHost"), beego.AppConfig.String("postgresqlPort"),
@@ -32,25 +35,33 @@ func init()  {
 	err = orm.RegisterDataBase("default", "postgres", psqlInfo)
 	CheckErr(err)
 	orm.RegisterModel(new(AirQualityIndex))
+	orm.RegisterModel(new(PredictAir))
 	err = orm.RunSyncdb("default", false, true)
 	CheckErr(err)
 }
 
 func Insert(insertData string)  {
 	o := orm.NewOrm()
-	r := o.Raw("alter table air_quality_index add constraint unique_date unique(date)")
-	_, err := r.Exec()
-	CheckErr(err)
+	//r := o.Raw("alter table air_quality_index add constraint unique_date unique(date)")
+	//_, err := r.Exec()
+	//CheckErr(err)
 	dataList := strings.Split(string(insertData), "\n")
 	values := "(?, ?, ?, ?, ?, ?, ?, ?, ?)"
 	time1 := time.Now()
 	for _, raw := range dataList{
 		rawList := strings.Split(raw, ",")
-		r = o.Raw(fmt.Sprintf("insert into air_quality_index values %s", values), rawList)
-		_, err = r.Exec()
+		r := o.Raw(fmt.Sprintf("insert into air_quality_index values %s", values), rawList)
+		_, err := r.Exec()
 		CheckErr(err)
 	}
 	beego.Informational(fmt.Sprintf("%v s insert finish!", time.Since(time1).Seconds()))
+}
+
+func PredictInsert(date string, predictAir float64)  {
+	o := orm.NewOrm()
+	r := o.Raw("insert into predict_air values (?, ?)", date, predictAir)
+	_, err := r.Exec()
+	CheckErr(err)
 }
 
 func Select(aqi *[]AirQualityIndex)  {
@@ -64,6 +75,13 @@ func DateSelect(aqi *[]AirQualityIndex, start, end string)  {
 	o := orm.NewOrm()
 	num, _ := o.Raw("select * from air_quality_index " +
 		"where date >= ? and date <= ?  order by date asc", start, end).QueryRows(aqi)
+	beego.Informational(fmt.Sprintf("%d raws select finish!", num))
+}
+
+func PredictAirSelect(end string, aqi *[]PredictAir)  {
+	o := orm.NewOrm()
+	num, _ := o.Raw("select * from predict_air " +
+		"where date < ? order by date asc", end).QueryRows(aqi)
 	beego.Informational(fmt.Sprintf("%d raws select finish!", num))
 }
 

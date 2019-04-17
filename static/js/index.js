@@ -7,14 +7,23 @@ $(function() {
 
     var AirQualityIndexHistory = {
         labels: dateHistory,
-        datasets: [{
-            label: 'Air Quality Index History data',
-            data: aqiHistory,
-            borderColor: ['rgba(255, 0, 0, 1)'],
-            backgroundColor: ['rgba(255, 0, 0, 1)'],
-            borderWidth: 2,
-            fill: false
-        }
+        datasets: [
+            {
+                label: 'Air Quality Index History data',
+                data: aqiHistory,
+                borderColor: ['rgba(255, 0, 0, 1)'],
+                backgroundColor: ['rgba(255, 0, 0, 1)'],
+                borderWidth: 2,
+                fill: false
+            },
+            {
+                label: 'Air Quality Index predict data',
+                data: aqiPredict,
+                borderColor: ['rgba(0, 0, 255, 1)'],
+                backgroundColor: ['rgba(0, 0, 255, 1)'],
+                borderWidth: 2,
+                fill: false
+            }
         ]
     };
 
@@ -22,29 +31,13 @@ $(function() {
     var AirQualityIndexFuture = {
         labels: dateFuture,
         datasets: [{
-            label: 'knn predict',
-            data: knnFuture,
+            label: 'nnlr predict',
+            data: nnlrFuture,
             borderColor: ['rgba(0, 0, 255, 1)'],
             backgroundColor: ['rgba(0, 0, 255, 1)'],
             borderWidth: 2,
             fill: false
         },
-        {
-            label: 'gbdt predict',
-            data: gbdtFuture,
-            borderColor: ['rgba(0, 255, 0, 1)'],
-            backgroundColor: ['rgba(0, 255, 0, 1)'],
-            borderWidth: 2,
-            fill: false
-        },
-        {
-            label: 'nn predict',
-            data: nnFuture,
-            borderColor: ['rgba(255, 255, 0, 1)'],
-            backgroundColor: ['rgba(255, 255, 0, 1)'],
-            borderWidth: 2,
-            fill: false
-        }
         ]
     };
 

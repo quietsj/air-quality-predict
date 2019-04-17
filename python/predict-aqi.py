@@ -5,12 +5,6 @@ import threading
 import datetime
 
 
-def normal(x):
-    for j in range(x.shape[1]):
-        sea = x[:, j]
-        x[:, j] = (sea - np.mean(sea)) / np.std(sea)
-
-
 def build_data(x):
     test_x, m = [], 7
     for i in range(len(x)-m):
@@ -35,38 +29,29 @@ def index_data(predict_data, path):
     predict_days = 7
     aqi = x[-predict_days:, 0]
     test_x = build_data(x)
-    normal(test_x)
 
     test_x = test_x[-1].reshape(1, 49)
     date = date[-predict_days:]
     for i in range(predict_days):
         now = datetime.datetime.strptime(date[-1], "%Y-%m-%d")
         date.append("{0}".format(now + datetime.timedelta(days=1))[:10])
-    # knn
-    knn_result = []
-    t = threading.Thread(target=predict, args=(path, "knn.pkl", test_x, knn_result))
+
+    # lr
+    lr_result = []
+    t = threading.Thread(target=predict, args=(path, "lr.pkl", test_x, lr_result))
     t.start()
     t.join()
-    # gbdt
-    gbdt_result = []
-    for j in range(predict_days):
-        gbdtj_result = []
-        t = threading.Thread(target=predict, args=(path, "gbdt{0}.pkl".format(j),
-                                                          test_x, gbdtj_result))
-        t.start()
-        t.join()
-        gbdt_result.append(gbdtj_result[0][0])
-    gbdt_result = np.array(gbdt_result)
+
     # nn
     nn_result = []
-    t = threading.Thread(target=predict, args=(path, "nn.pkl", test_x, nn_result))
+    t = threading.Thread(target=predict, args=(path, "bp.pkl", test_x, nn_result))
     t.start()
     t.join()
-    res = "{0}\n{1}\n{2}\n{3}\n{4}".format(",".join(date),
+    lr_result = lr_result[0][0]
+    lr_result[0] = nn_result[0][0]
+    res = "{0}\n{1}\n{2}".format(",".join(date),
                                            ",".join(aqi.astype(np.str)),
-                                           ",".join(knn_result[0][0].astype(np.str)),
-                                           ",".join(gbdt_result.astype(np.str)),
-                                           ",".join(nn_result[0][0].astype(np.str)))
+                                           ",".join(lr_result.astype(np.str)))
     return res
 
 

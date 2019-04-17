@@ -1,20 +1,13 @@
 import numpy as np
-from sklearn.neighbors import KNeighborsRegressor
-from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.neural_network import MLPRegressor
 from sklearn.externals import joblib
+from sklearn.linear_model import LinearRegression
+from sklearn.neural_network import MLPRegressor
 import threading
 import time
 
 
 def l1_loss(y, y_):
     return np.mean(map(abs, y - y_))
-
-
-def normal(x):
-    for j in range(x.shape[1]):
-        sea = x[:, j]
-        x[:, j] = (sea - np.mean(sea)) / np.std(sea)
 
 
 def calculate_loss(path, model, x, y, result):
@@ -28,59 +21,35 @@ def fit(mo, path, train_x, train_y):
     joblib.dump(mo, path)
 
 
-def nearest_neighbors(path, train_x, train_y, validate_x, validate_y):
-    mo = KNeighborsRegressor(n_neighbors=7)
-    normal(train_x)
-    normal(validate_x)
-    t = threading.Thread(target=fit, args=(mo, path + "knn.pkl", train_x, train_y))
+def normal(x):
+    for j in range(x.shape[1]):
+        seq = x[:, j]
+        x[:, j] = (seq - np.min(seq)) / (np.max(seq) - np.min(seq))
+
+
+def build_model(path, train_x, train_y, validate_x, validate_y, mo, name):
+    # normal(train_x)
+    # normal(validate_x)
+    t = threading.Thread(target=fit, args=(mo, path + name + ".pkl", train_x, train_y))
     t.start()
     t.join()
     result = []
-    t = threading.Thread(target=calculate_loss, args=(path, "knn.pkl", validate_x, validate_y, result))
+    t = threading.Thread(target=calculate_loss, args=(path, name + ".pkl", train_x, train_y, result))
     t.start()
     t.join()
-    print "knn", np.mean(result)
-
-
-def gradient_boosting_tree(path, train_x, train_y, validate_x, validate_y):
-    mo = GradientBoostingRegressor(n_estimators=200, max_features=14, max_depth=7,
-                                   learning_rate=0.01, loss="lad")
-    normal(train_x)
-    normal(validate_x)
-    for j in range(train_y.shape[1]):
-        t = threading.Thread(target=fit, args=(mo, path + "gbdt{0}.pkl".format(j),
-                                               train_x, train_y[:, j]))
-        t.start()
-        t.join()
+    print name + " train", np.mean(result)
     result = []
-    for j in range(train_y.shape[1]):
-        t = threading.Thread(target=calculate_loss, args=(path, "gbdt{0}.pkl".format(j),
-                                                          validate_x, validate_y[:, j], result))
-        t.start()
-        t.join()
-    print "gbdt", np.mean(result)
-
-
-def neural_network(path, train_x, train_y, validate_x, validate_y):
-    mo = MLPRegressor(hidden_layer_sizes=(2, 3), alpha=0.1,
-                      max_iter=10000, activation="tanh")
-    normal(train_x)
-    normal(validate_x)
-    t = threading.Thread(target=fit, args=(mo, path + "nn.pkl", train_x, train_y))
+    t = threading.Thread(target=calculate_loss, args=(path, name + ".pkl", validate_x, validate_y, result))
     t.start()
     t.join()
-    result = []
-    t = threading.Thread(target=calculate_loss, args=(path, "nn.pkl", validate_x, validate_y, result))
-    t.start()
-    t.join()
-    print "nn valid", np.mean(result)
+    print name + " valid", np.mean(result)
 
 
 def build_data(x):
-    train_x, train_y, m = [], [], 7
-    for i in range(len(x)-m-7):
-        train_x.append(np.reshape(x[i:i+m], (49,)))
-        train_y.append(x[i+m:i+m+7, 0])
+    train_x, train_y, y_num, m = [], [], 7, 7
+    for i in range(len(x)-m-y_num):
+        train_x.append(np.reshape(x[i:i+m, :], (7*m,)))
+        train_y.append(x[i+m:i+m+y_num, 0])
     return np.array(train_x), np.array(train_y)
 
 
@@ -96,9 +65,10 @@ def train(train_data, path):
     validate_y = train_y[-100:]
     train_x = train_x[:-100]
     train_y = train_y[:-100]
-    nearest_neighbors(path, train_x, train_y, validate_x, validate_y)
-    gradient_boosting_tree(path, train_x, train_y, validate_x, validate_y)
-    neural_network(path, train_x, train_y, validate_x, validate_y)
+    build_model(path, train_x, train_y, validate_x, validate_y,
+                LinearRegression(), "lr")
+    build_model(path, train_x, train_y[:, 0], validate_x, validate_y[:, 0],
+                MLPRegressor(hidden_layer_sizes=(1, ), max_iter=10000, activation="identity"), "bp")
     return "{0} s finish train".format(time.time() - start)
 
 
@@ -107,3 +77,6 @@ def train(train_data, path):
 #     train(data.read(), "")
 
 
+# mean:15.16, np.mean([abs(x[i+1, 0] - x[i, 0]) for i in range(len(x)-1)])
+# std:26.84, np.std(x[:, 0])
+# AQI PM2.5 PM10 SO2 CO	NO2	O3

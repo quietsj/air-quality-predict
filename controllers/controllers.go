@@ -33,10 +33,9 @@ func (c *MainController) Get() {
 	c.TplName = "pages/charts/index-js.html"
 	c.Data["dateHistory"] = indexData["dateHistory"]
 	c.Data["aqiHistory"] = indexData["aqiHistory"]
+	c.Data["aqiPredict"] = indexData["aqiPredict"]
 	c.Data["dateFuture"] = indexData["dateFuture"]
-	c.Data["knnFuture"] = indexData["knnFuture"]
-	c.Data["gbdtFuture"] = indexData["gbdtFuture"]
-	c.Data["nnFuture"] = indexData["nnFuture"]
+	c.Data["nnlrFuture"] = indexData["nnlrFuture"]
 	c.Layout = "layout/layout.html"
 	c.LayoutSections = make(map[string]string)
 	c.LayoutSections["LayoutContent"] = "index.html"
