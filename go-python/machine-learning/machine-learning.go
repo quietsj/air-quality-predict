@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-var TestDays = 30
+var TestDays = 100
 
 func TrainModel()  {
 	aqiData := make([]models.AirQualityIndex, 0, 0)
@@ -58,16 +58,16 @@ func  Index(stringData string, indexData map[string]interface{})  {
 		nnlr = append(nnlr, v1)
 	}
 	predictAir := make([]models.PredictAir, 0, 0)
-	models.PredictAirSelect(date[predictDays:][0], &predictAir)
+	models.PredictAirSelect(date[len(date)-predictDays:][0], &predictAir)
 	aqiPredict := make([]float64, 0, 0)
 	for _, value := range predictAir{
 		aqiPredict = append(aqiPredict, value.AQI)
 	}
-	if len(aqiPredict) > 7{
-		aqiPredict = aqiPredict[len(aqiPredict)-predictDays:]
-	}
-	indexData["dateHistory"] = date[:predictDays]
-	indexData["dateFuture"] = date[predictDays:]
+	//if len(aqiPredict) > 7{
+	//	aqiPredict = aqiPredict[len(aqiPredict)-predictDays:]
+	//}
+	indexData["dateHistory"] = date[len(date)-predictDays-len(aqiPredict):len(date)-predictDays]
+	indexData["dateFuture"] = date[len(date)-predictDays:]
 	indexData["aqiHistory"] = aqi
 	indexData["aqiPredict"] = aqiPredict
 	indexData["nnlrFuture"] = nnlr

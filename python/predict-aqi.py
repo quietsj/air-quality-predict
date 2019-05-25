@@ -27,11 +27,11 @@ def index_data(predict_data, path):
         x.append(r[1:2] + r[3:])
     x = np.array(x).astype(np.float64)
     predict_days = 7
-    aqi = x[-predict_days:, 0]
+    aqi = x[:, 0]
     test_x = build_data(x)
 
     test_x = test_x[-1].reshape(1, 49)
-    date = date[-predict_days:]
+    # date = date[-predict_days:]
     for i in range(predict_days):
         now = datetime.datetime.strptime(date[-1], "%Y-%m-%d")
         date.append("{0}".format(now + datetime.timedelta(days=1))[:10])
@@ -44,7 +44,7 @@ def index_data(predict_data, path):
 
     # nn
     nn_result = []
-    t = threading.Thread(target=predict, args=(path, "bp.pkl", test_x, nn_result))
+    t = threading.Thread(target=predict, args=(path, "SVR.pkl", test_x, nn_result))
     t.start()
     t.join()
     lr_result = lr_result[0][0]
